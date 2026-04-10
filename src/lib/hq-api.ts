@@ -149,7 +149,7 @@ export const getHqAnalytics = async () => {
 export const getLiveLogs = async (limit = 10): Promise<LiveLog[]> => {
   const { data } = await supabase
     .from("traffic_logs")
-    .select(`id, created_at, path, profiles:user_id (email)`)
+    .select("id, created_at, path, user_id")
     .order("created_at", { ascending: false })
     .limit(limit);
 
@@ -157,7 +157,7 @@ export const getLiveLogs = async (limit = 10): Promise<LiveLog[]> => {
     id: item.id,
     created_at: item.created_at,
     path: item.path,
-    user_email: item.profiles?.email
+    user_email: item.user_id ? `user-${item.user_id.slice(0, 8)}` : undefined
   }));
 };
 
