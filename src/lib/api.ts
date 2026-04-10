@@ -138,7 +138,7 @@ export async function updateAppointmentStatus(id: string, status: string) {
         .from("waitlist")
         .select("*")
         .eq("business_id", apt.business_id)
-        .eq("date", apt.appointment_date);
+        .eq("desired_date", apt.appointment_date);
       
       if (waitlist && waitlist.length > 0) {
         waitlist.forEach((entry: any) => {
@@ -157,7 +157,11 @@ export async function updateAppointmentStatus(id: string, status: string) {
 }
 
 export async function joinWaitlist(data: { business_id: string; user_id: string; date: string }) {
-  const { error } = await supabase.from("waitlist").insert(data);
+  const { error } = await supabase.from("waitlist").insert({
+    business_id: data.business_id,
+    user_id: data.user_id,
+    desired_date: data.date
+  });
   if (error) throw error;
   return true;
 }
