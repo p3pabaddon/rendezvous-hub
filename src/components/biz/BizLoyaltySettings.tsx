@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Gift, Save, CheckCircle2, AlertCircle, Sparkles, Users } from "lucide-react";
+import { Gift, Save, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,12 +22,7 @@ export const BizLoyaltySettings = ({ businessId }: Props) => {
     reward_type: "free_service",
     is_active: false
   });
-  const [referral, setReferral] = useState<any>({
-    is_referral_active: false,
-    referral_reward_type: "fixed",
-    referral_reward_value: 50,
-    referral_reward_target: "both"
-  });
+  const [referralActive, setReferralActive] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -37,11 +32,11 @@ export const BizLoyaltySettings = ({ businessId }: Props) => {
     try {
       const [programRes, bizRes] = await Promise.all([
         supabase.from("loyalty_programs").select("*").eq("business_id", businessId).single(),
-        supabase.from("businesses").select("is_referral_active, referral_reward_type, referral_reward_value, referral_reward_target").eq("id", businessId).single()
+        supabase.from("businesses").select("referral_active").eq("id", businessId).single()
       ]);
 
       if (programRes.data) setProgram(programRes.data);
-      if (bizRes.data) setReferral(bizRes.data);
+      if (bizRes.data) setReferralActive(bizRes.data.referral_active || false);
     } catch (err) {
       console.error("Yükleme hatası:", err);
     } finally {
@@ -64,7 +59,7 @@ export const BizLoyaltySettings = ({ businessId }: Props) => {
 
       const { error: bError } = await supabase
         .from("businesses")
-        .update(referral)
+        .update({ referral_active: referralActive })
         .eq("id", businessId);
 
       if (bError) throw bError;
@@ -182,58 +177,17 @@ export const BizLoyaltySettings = ({ businessId }: Props) => {
               <Label htmlFor="ref-toggle" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Aktif</Label>
               <Switch 
                 id="ref-toggle"
-                checked={referral.is_referral_active}
-                onCheckedChange={(checked) => setReferral({...referral, is_referral_active: checked})}
+                checked={referralActive}
+                onCheckedChange={setReferralActive}
               />
             </div>
           </div>
         </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <Label>Ödül Türü</Label>
-              <Select 
-                value={referral.referral_reward_type} 
-                onValueChange={(val) => setReferral({...referral, referral_reward_type: val})}
-              >
-                <SelectTrigger className="bg-muted/50 border-none">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="fixed">Sabit Tutar (₺)</SelectItem>
-                  <SelectItem value="percent">Yüzde İndirim (%)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Ödül Miktarı</Label>
-              <Input 
-                type="number"
-                value={referral.referral_reward_value}
-                onChange={(e) => setReferral({...referral, referral_reward_value: Number(e.target.value)})}
-                className="bg-muted/50 border-none font-bold text-accent"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label>Hedef Kitle</Label>
-            <Select 
-              value={referral.referral_reward_target} 
-              onValueChange={(val) => setReferral({...referral, referral_reward_target: val})}
-            >
-              <SelectTrigger className="bg-muted/50 border-none">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="referrer">Sadece Davet Eden Kazansın</SelectItem>
-                <SelectItem value="referee">Sadece Gelen Arkadaş Kazansın</SelectItem>
-                <SelectItem value="both">Her İkisi de Kazansın</SelectItem>
-              </SelectContent>
-            </Select>
-            <p className="text-[10px] text-muted-foreground italic">Başarılı bir referans sonrası kim ödül alacak?</p>
-          </div>
+        <CardContent>
+          <p className="text-sm text-muted-foreground">
+            Referans kampanyası aktif olduğunda, müşterileriniz arkadaşlarını davet edebilir. 
+            Başarılı her referansta her iki tarafa da 50₺ indirim kodu otomatik olarak oluşturulur.
+          </p>
         </CardContent>
       </Card>
 
