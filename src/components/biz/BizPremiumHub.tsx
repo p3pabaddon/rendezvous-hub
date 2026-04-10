@@ -11,7 +11,7 @@ import {
   BarChart3,
   Loader2
 } from "lucide-react";
-import { Business } from "@/lib/api";
+import { Business } from "@/types";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
