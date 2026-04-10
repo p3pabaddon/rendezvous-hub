@@ -278,15 +278,14 @@ export function BizSettingsTab({ businessId }: { businessId: string }) {
                   <div 
                     key={day.key} 
                     className={cn(
-                      "group flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 p-4 rounded-3xl border transition-all duration-300",
+                      "group flex flex-col gap-4 p-4 rounded-3xl border transition-all duration-300 overflow-hidden",
                       hour.closed 
                         ? "bg-slate-950/20 border-slate-900/50 opacity-60" 
                         : "bg-slate-900/40 border-slate-800/80 hover:border-primary/40 hover:bg-slate-900/60 shadow-xl shadow-black/10"
                     )}
                   >
-                    {/* Top row: Day Info + Toggle */}
-                    <div className="flex items-center justify-between w-full sm:w-auto sm:justify-start gap-4 sm:flex-1 sm:min-w-[140px]">
-                      <div className="flex items-center gap-3">
+                    <div className="flex items-center justify-between gap-4 w-full min-w-0">
+                      <div className="flex items-center gap-3 min-w-0">
                         <div className={cn(
                           "w-10 h-10 rounded-2xl flex items-center justify-center border transition-all duration-300 shrink-0",
                           hour.closed 
@@ -295,9 +294,9 @@ export function BizSettingsTab({ businessId }: { businessId: string }) {
                         )}>
                           <span className="text-[10px] font-black uppercase tracking-tighter">{day.label.slice(0, 3)}</span>
                         </div>
-                        <div>
+                        <div className="min-w-0">
                           <p className={cn(
-                            "text-sm font-black tracking-tight",
+                            "text-sm font-black tracking-tight truncate",
                             hour.closed ? "text-slate-600" : "text-white"
                           )}>{day.label}</p>
                           <p className={cn(
@@ -308,55 +307,43 @@ export function BizSettingsTab({ businessId }: { businessId: string }) {
                           </p>
                         </div>
                       </div>
-                      <div className="sm:hidden">
-                        <Switch 
-                          checked={!hour.closed} 
-                          onCheckedChange={(v) => updateWorkingHour(day.key, "closed", !v)}
-                          className="data-[state=checked]:bg-emerald-500"
-                        />
-                      </div>
+                      <Switch 
+                        checked={!hour.closed} 
+                        onCheckedChange={(v) => updateWorkingHour(day.key, "closed", !v)}
+                        className="data-[state=checked]:bg-emerald-500 shrink-0"
+                      />
                     </div>
                     
-                    {/* Middle: Time Selectors */}
-                    <div className="flex items-center justify-center gap-2 w-full sm:w-auto sm:flex-[2]">
+                    <div className="w-full">
                       {!hour.closed ? (
-                        <div className="flex items-center gap-2 w-full sm:w-auto">
-                           <div className="flex flex-col flex-1 sm:flex-none">
-                              <span className="text-[7px] font-bold text-slate-500 uppercase tracking-widest ml-1 mb-0.5">AÇILIŞ</span>
-                              <Input 
-                                type="time" 
-                                value={hour.start} 
-                                onChange={(e) => updateWorkingHour(day.key, "start", e.target.value)}
-                                className="bg-slate-950/50 border-slate-800 h-9 text-xs w-full sm:w-24 text-center rounded-xl focus:ring-1 focus:ring-primary/20"
-                              />
-                           </div>
-                           
-                           <div className="mt-3 text-slate-800">–</div>
+                        <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-end gap-2 w-full">
+                          <div className="flex flex-col min-w-0">
+                            <span className="text-[7px] font-bold text-slate-500 uppercase tracking-widest ml-1 mb-0.5">AÇILIŞ</span>
+                            <Input 
+                              type="time" 
+                              value={hour.start} 
+                              onChange={(e) => updateWorkingHour(day.key, "start", e.target.value)}
+                              className="bg-slate-950/50 border-slate-800 h-9 text-xs w-full min-w-0 text-center rounded-xl focus:ring-1 focus:ring-primary/20"
+                            />
+                          </div>
 
-                           <div className="flex flex-col flex-1 sm:flex-none">
-                              <span className="text-[7px] font-bold text-slate-500 uppercase tracking-widest ml-1 mb-0.5">KAPANIŞ</span>
-                              <Input 
-                                type="time" 
-                                value={hour.end} 
-                                onChange={(e) => updateWorkingHour(day.key, "end", e.target.value)}
-                                className="bg-slate-950/50 border-slate-800 h-9 text-xs w-full sm:w-24 text-center rounded-xl focus:ring-1 focus:ring-primary/20"
-                              />
-                           </div>
+                          <div className="pb-2 text-slate-800 text-center">–</div>
+
+                          <div className="flex flex-col min-w-0">
+                            <span className="text-[7px] font-bold text-slate-500 uppercase tracking-widest ml-1 mb-0.5">KAPANIŞ</span>
+                            <Input 
+                              type="time" 
+                              value={hour.end} 
+                              onChange={(e) => updateWorkingHour(day.key, "end", e.target.value)}
+                              className="bg-slate-950/50 border-slate-800 h-9 text-xs w-full min-w-0 text-center rounded-xl focus:ring-1 focus:ring-primary/20"
+                            />
+                          </div>
                         </div>
                       ) : (
-                        <div className="text-[8px] text-slate-700 font-mono tracking-[0.2em] uppercase italic bg-slate-950/40 px-6 py-2 rounded-xl border border-dashed border-slate-800">
-                           MAĞAZA KAPALI
+                        <div className="text-[8px] text-slate-700 font-mono tracking-[0.2em] uppercase italic bg-slate-950/40 px-6 py-2 rounded-xl border border-dashed border-slate-800 w-full text-center">
+                          MAĞAZA KAPALI
                         </div>
-                      ) }
-                    </div>
-
-                    {/* Right: Actions (desktop only) */}
-                    <div className="hidden sm:flex items-center justify-end flex-1">
-                        <Switch 
-                          checked={!hour.closed} 
-                          onCheckedChange={(v) => updateWorkingHour(day.key, "closed", !v)}
-                          className="data-[state=checked]:bg-emerald-500"
-                        />
+                      )}
                     </div>
                   </div>
                 );

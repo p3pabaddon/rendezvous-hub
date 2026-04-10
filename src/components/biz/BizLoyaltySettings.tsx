@@ -25,18 +25,20 @@ export const BizLoyaltySettings = ({ businessId }: Props) => {
   const [referralActive, setReferralActive] = useState(false);
 
   useEffect(() => {
-    loadData();
+    if (businessId) {
+      loadData();
+    }
   }, [businessId]);
 
   const loadData = async () => {
     try {
       const [programRes, bizRes] = await Promise.all([
-        supabase.from("loyalty_programs").select("*").eq("business_id", businessId).single(),
-        supabase.from("businesses").select("referral_active").eq("id", businessId).single()
+        supabase.from("loyalty_programs").select("*").eq("business_id", businessId).maybeSingle(),
+        supabase.from("businesses").select("referral_active").eq("id", businessId).maybeSingle()
       ]);
 
       if (programRes.data) setProgram(programRes.data);
-      if (bizRes.data) setReferralActive(bizRes.data.referral_active || false);
+      if (bizRes.data) setReferralActive(Boolean(bizRes.data.referral_active));
     } catch (err) {
       console.error("Yükleme hatası:", err);
     } finally {
