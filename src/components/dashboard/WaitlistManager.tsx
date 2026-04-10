@@ -1,14 +1,12 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { 
   Users, 
   Trash2, 
   Send, 
-  CheckCircle, 
-  Phone, 
-  Mail,
+  Calendar,
+  Clock,
   MoreVertical,
   UserPlus
 } from "lucide-react";
@@ -62,18 +60,9 @@ export function WaitlistManager({ businessId }: WaitlistManagerProps) {
   };
 
   const notifyEntry = async (id: string) => {
-    // In a real app, this would trigger an email/sms via edge function
-    const { error } = await supabase
-      .from("waitlist")
-      .update({ is_notified: true, notified_at: new Date().toISOString() })
-      .eq("id", id);
-
-    if (error) {
-      toast.error("Bildirim gönderilemedi");
-    } else {
-      toast.success("Bildirim gönderildi (Simülasyon)");
-      loadWaitlist();
-    }
+    // Simulation - in production this would send email/sms
+    toast.success("Bildirim gönderildi (Simülasyon)");
+    await deleteEntry(id);
   };
 
   if (loading) return <div className="p-8 text-center text-muted-foreground">Yükleniyor...</div>;
@@ -102,20 +91,16 @@ export function WaitlistManager({ businessId }: WaitlistManagerProps) {
               </div>
               <div>
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="font-semibold text-foreground">{entry.customer_name}</span>
-                  {entry.is_notified && (
-                    <Badge variant="secondary" className="bg-green-500/10 text-green-600 border-green-500/20 text-[10px]">
-                      <CheckCircle className="w-3 h-3 mr-1" /> Bildirildi
-                    </Badge>
-                  )}
+                  <span className="font-semibold text-foreground text-sm">Kullanıcı #{entry.user_id?.slice(0, 8)}</span>
                 </div>
                 <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
-                  <span className="flex items-center gap-1"><Phone className="w-3 h-3" /> {entry.customer_phone}</span>
-                  {entry.customer_email && (
-                    <span className="flex items-center gap-1"><Mail className="w-3 h-3" /> {entry.customer_email}</span>
-                  )}
-                  {entry.service_name && (
-                    <Badge variant="outline" className="text-[10px] py-0">{entry.service_name}</Badge>
+                  <span className="flex items-center gap-1">
+                    <Calendar className="w-3 h-3" /> {format(new Date(entry.desired_date), "d MMMM yyyy", { locale: tr })}
+                  </span>
+                  {entry.desired_time && (
+                    <span className="flex items-center gap-1">
+                      <Clock className="w-3 h-3" /> {entry.desired_time}
+                    </span>
                   )}
                 </div>
               </div>
