@@ -113,17 +113,14 @@ export async function updateAppointmentStatus(id: string, status: string) {
           .from("referrals")
           .select("*")
           .eq("referred_id", apt.customer_id)
-          .eq("is_rewarded", false)
+          .eq("status", "pending")
           .single();
 
         if (refRecord) {
           await awardReferralReward(apt.business_id, refRecord.referrer_id, apt.customer_id);
-          // Mark this referral as rewarded so they don't get rewards multiple times
           await supabase.from("referrals").update({ 
-            is_rewarded: true,
             status: 'completed',
             completed_at: new Date().toISOString(),
-            business_id: apt.business_id // Track which business paid the reward
           }).eq("id", refRecord.id);
         }
         
@@ -141,7 +138,7 @@ export async function updateAppointmentStatus(id: string, status: string) {
         .from("waitlist")
         .select("*")
         .eq("business_id", apt.business_id)
-        .eq("date", apt.appointment_date);
+        .eq("desired_date", apt.appointment_date);
       
       if (waitlist && waitlist.length > 0) {
         waitlist.forEach((entry: any) => {
@@ -160,34 +157,16 @@ export async function updateAppointmentStatus(id: string, status: string) {
 }
 
 export async function joinWaitlist(data: { business_id: string; user_id: string; date: string }) {
-  const { error } = await supabase.from("waitlist").insert(data);
+  const { error } = await supabase.from("waitlist").insert({
+    business_id: data.business_id,
+    user_id: data.user_id,
+    desired_date: data.date
+  });
   if (error) throw error;
   return true;
 }
 
-export interface Business {
-  id: string;
-  name: string;
-  description: string | null;
-  category: string;
-  address: string;
-  city: string;
-  district: string;
-  image_url: string | null;
-  working_hours: Record<string, any>;
-  rating: number;
-  review_count: number;
-  slug: string;
-  phone: string | null;
-  amenities: string[];
-  created_at: string;
-  is_premium?: boolean;
-  premium_until?: string | null;
-  personnel_limit?: number;
-  is_featured?: boolean;
-  featured_until?: string | null;
-  branding_config?: Record<string, any>;
-}
+// Business type is now in src/types/index.ts
 
 const NOTIFICATION_TEMPLATES = {
   status_change: (data: any) => `
@@ -296,9 +275,8 @@ export async function getOccupiedSlots(businessId: string, date: string, staffId
 }
 
 export async function getAdminSystemStats() {
-  const [bizRes, usersRes, aptsRes, revenueRes] = await Promise.all([
+  const [bizRes, aptsRes, revenueRes] = await Promise.all([
     supabase.from("businesses").select("id", { count: "exact", head: true }),
-    supabase.from("profiles").select("id", { count: "exact", head: true }),
     supabase.from("appointments").select("id", { count: "exact", head: true }),
     supabase.from("appointments").select("total_price").eq("status", "completed"),
   ]);
@@ -307,7 +285,7 @@ export async function getAdminSystemStats() {
 
   return {
     totalBusinesses: bizRes.count || 0,
-    totalUsers: usersRes.count || 0,
+    totalUsers: 0,
     totalAppointments: aptsRes.count || 0,
     totalRevenue,
   };
@@ -494,31 +472,27 @@ export async function getReferralStats() {
 
 export async function awardReferralReward(businessId: string, referrerId: string, refereeId: string) {
    // 1. Get business referral config
-   const { data: biz } = await supabase.from("businesses").select("is_referral_active, referral_reward_type, referral_reward_value, referral_reward_target").eq("id", businessId).single();
+   const { data: biz } = await supabase.from("businesses").select("referral_active").eq("id", businessId).single();
    
-   if (!biz || !biz.is_referral_active) return;
+   if (!biz || !biz.referral_active) return;
 
    // 2. Award to Referrer
-   if (biz.referral_reward_target === 'referrer' || biz.referral_reward_target === 'both') {
-     await createPromoCode({
-       business_id: businessId,
-       customer_id: referrerId,
-       discount_type: biz.referral_reward_type === 'percent' ? 'percent' : 'fixed',
-       discount_value: biz.referral_reward_value,
-       code: `REF-B-${Math.random().toString(36).substring(2, 8).toUpperCase()}`
-     });
-   }
+   await createPromoCode({
+     business_id: businessId,
+     customer_id: referrerId,
+     discount_type: 'fixed',
+     discount_value: 50,
+     code: `REF-B-${Math.random().toString(36).substring(2, 8).toUpperCase()}`
+   });
 
    // 3. Award to Referee
-   if (biz.referral_reward_target === 'referee' || biz.referral_reward_target === 'both') {
-     await createPromoCode({
-       business_id: businessId,
-       customer_id: refereeId,
-       discount_type: biz.referral_reward_type === 'percent' ? 'percent' : 'fixed',
-       discount_value: biz.referral_reward_value,
-       code: `REF-W-${Math.random().toString(36).substring(2, 8).toUpperCase()}`
-     });
-   }
+   await createPromoCode({
+     business_id: businessId,
+     customer_id: refereeId,
+     discount_type: 'fixed',
+     discount_value: 50,
+     code: `REF-W-${Math.random().toString(36).substring(2, 8).toUpperCase()}`
+   });
 }
 
 // --- Intelligence & AI Functions ---

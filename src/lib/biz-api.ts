@@ -221,11 +221,12 @@ export const replyToReview = async (reviewId: string, reply: string) => {
 
 // --- WAITLIST ---
 export const getWaitlist = async (businessId: string) => {
-  const { data } = await supabase.from("waitlist").select("*").eq("business_id", businessId).eq("is_notified", false).order("created_at", { ascending: true });
+  const { data } = await supabase.from("waitlist").select("*").eq("business_id", businessId).order("created_at", { ascending: true });
   return data || [];
 };
 
 export const notifyWaitlist = async (id: string) => {
-  const { error } = await supabase.from("waitlist").update({ is_notified: true, notified_at: new Date().toISOString() }).eq("id", id);
+  // Waitlist notification - just delete the entry after notifying
+  const { error } = await supabase.from("waitlist").delete().eq("id", id);
   if (error) throw error;
 };
