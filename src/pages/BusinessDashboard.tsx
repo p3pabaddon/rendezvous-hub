@@ -210,9 +210,9 @@ export default function BusinessDashboard() {
                 />
               )}
 
-              {activeTab === "loyalty" && (
+              {activeTab === "loyalty" && business && (
                 <BizLoyaltySettings 
-                  businessId={business?.id}
+                  businessId={business.id}
                 />
               )}
 
