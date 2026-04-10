@@ -14,6 +14,7 @@ export interface Business {
   is_verified: boolean;
   is_boosted: boolean;
   is_active: boolean;
+  is_featured?: boolean;
   rating: number;
   review_count: number;
   price_range?: string;
